@@ -27,7 +27,7 @@ const promotionSchema = new Schema({
 	description: {
 		type: String, 
 		required: true
-	},
+	}
 }, {
 	timeStamps: true
 });
