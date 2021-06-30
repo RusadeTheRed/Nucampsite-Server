@@ -1,12 +1,9 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const session = require('express-session');
-const fileStore = require('session-file-store')(session);
 const passport = require('passport');
-const authenticate = require('./authenticate');
+const config = require('./config');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -15,9 +12,8 @@ const promotionRouter = require('./routes/promotionRouter');
 const partnerRouter = require('./routes/partnerRouter');
 
 const mongoose = require('mongoose');
-const { RSA_NO_PADDING } = require('constants');
 
-const url = 'mongodb://localhost:27017/nucampsite';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url, {
 	useCreateIndex: true,
 	useFindAndModify: false,
@@ -40,42 +36,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 //app.use(cookieParser('12345-67890-09876-54321'));// here's your sign
 
-app.use(session({
-	name: 'session-id',
-	secret: '12345-67890-09876-54321',
-	saveUninitialized: false,
-	resave: false,
-	store: new fileStore()
-}));
-
 app.use(passport.initialize());//needed for sessions
-app.use(passport.session());
-
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-function auth(req, res, next) {// above this point to access w/out auth
-	console.log(req.user);
-
-	if(!req.user) {
-		const err = new Error('You are not authenticated!');
-		err.status = 401;
-		return next(err);
-	} else {
-		return next();
-	}
-}
-
-app.use(auth);
-
+// moved auth(protection) to individual files
 app.use(express.static(path.join(__dirname, 'public')));
-
 
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
